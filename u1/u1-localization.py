@@ -1,0 +1,88 @@
+
+colors = [['red', 'green', 'green', 'red' , 'red'],
+          ['red', 'red', 'green', 'red', 'red'],
+          ['red', 'red', 'green', 'green', 'red'],
+          ['red', 'red', 'red', 'red', 'red']]
+
+measurements = ['green', 'green', 'green' ,'green', 'green']
+motions = [[0,0],[0,1],[1,0],[1,0],[0,1]]
+sensor_right = 0.7
+p_move = 0.8
+
+#colors = [['green', 'green', 'green'],
+#          ['green', 'red', 'red'],
+#          ['green', 'green', 'green']]
+#
+#measurements = ['red' ,'red']
+#motions = [[0,0],[0,1]]
+#
+#sensor_right = 1.0
+#p_move = 1.0
+
+def show(p):
+    for i in range(len(p)):
+        print p[i]
+    print''
+
+#DO NOT USE IMPORT
+#ENTER CODE BELOW HERE
+#ANY CODE ABOVE WILL CAUSE
+#HOMEWORK TO BE GRADED
+#INCORRECT
+
+# Extract world dimensions
+h = len(colors)
+w = len(colors[0])
+
+# sense(p, Z) executes a single measurement Z, returns the resulting probability distribution, q
+def sense(p, Z):
+   q = [[0 for j in range(w)] for i in range(h)]
+   for i in range(h):
+      for j in range(w):
+         match = (Z == colors[i][j]) # True if observation matches map
+         hit = sensor_right*match + (1-sensor_right) * (not match) # Apply sensor accuracy			
+         q[i][j] = p[i][j] * hit
+
+   return q
+
+# move(p, v) executes a single movement v = [a,b], returns the resulting probability distribution, q
+def move(p, v):
+   q=[[0 for j in range(w)] for i in range(h)]
+   for i in range(h):
+      for j in range(w):
+         # Add both probabilities: the robot didn't move or the robot moved
+         q[i][j] = p[i][j] *  (1 - p_move) +	p[i-v[0]][j-v[1]] * p_move
+
+   return q
+
+# normalize(p) returns the normalized probability distribution q
+def normalize(p):
+   q=[[0 for j in range(w)] for i in range(h)]
+   alpha = 0
+   for i in range(h):
+      for j in range(w):
+         alpha = alpha + p[i][j]
+   # Can't divide by zero. Not sure about the correct way to raise this error...
+   if alpha == 0: raise ValueError
+   for i in range(h):
+      for j in range(w):
+         q[i][j] = p[i][j] / alpha
+	
+   return q
+			
+# Initialize the probability distribution p (uniform)
+prob = 1.0/(h*w)   
+p = [[ prob for j in range(w)] for i in range(h)]
+
+# Execute all motions and measurements
+for i in range(len(measurements)):
+   p = move(p, motions[i])
+   p = sense(p, measurements[i])
+
+# normalize and print the final distribution
+try:
+   p = normalize(p)
+except ValueError:
+   print "Something went wrong, total probability is zero. Your robot is lost."
+	
+show(p)
